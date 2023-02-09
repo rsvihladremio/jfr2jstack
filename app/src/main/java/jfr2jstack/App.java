@@ -43,13 +43,18 @@ public class App implements Callable<Integer> {
       }
     }
     for (Map.Entry<Instant, String> jstack : jstacks.entrySet()) {
-      final BufferedWriter writer =
+      try(final BufferedWriter writer =
           Files.newBufferedWriter(
               Paths.get(
                   outputFolder.toPath().toAbsolutePath().toString(),
                   "jstack-"
                       + jstack.getKey().atZone(ZoneId.of("UTC")).format(dateTimeFormatter)
-                      + ".txt"));
+                      + ".txt"))){
+          writer.append(jstack.getValue());
+          writer.flush();
+                      }
+
+
     }
     return 0;
   }
