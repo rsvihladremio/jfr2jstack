@@ -1,132 +1,170 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-<modelVersion>4.0.0</modelVersion>
+  <groupId>com.dremio.support.diagnostics</groupId>
+  <artifactId>jfr2jstack</artifactId>
+  <version>0.2.0</version>
 
-<groupId>com.dremio.support.diagnostics</groupId>
-<artifactId>jfr2jstack</artifactId>
-<version>1.0-SNAPSHOT</version>
+  <name>jfr2jstack</name>
+  <url>http://github.com/rsvihladremio/jfr2jstack</url>
 
-<name>jfr2jstack</name>
-<!-- FIXME change it to the project's website -->
-<url>http://www.example.com</url>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <spotless.version>2.43.0</spotless.version>
+    <google-java-format.version>1.19.2</google-java-format.version>
+  </properties>
 
-<properties>
-	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	<spotless.version>2.43.0</spotless.version>
-	<google-java-format.version>1.19.2</google-java-format.version>
-</properties>
+  <dependencies>
+    <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>4.7.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.12.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.9.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-<dependencies>
-<dependency>
-<groupId>info.picocli</groupId>
-<artifactId>picocli</artifactId>
-<version>4.7.6</version>
-</dependency>
-	<dependency>
-		<groupId>org.junit.jupiter</groupId>
-		<artifactId>junit-jupiter-engine</artifactId>
-		<version>5.9.1</version>
-		<scope>test</scope>
-	</dependency>
-</dependencies>
+  <build>
+    <pluginManagement>
+      <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+      <plugins>
+        <plugin>
+          <groupId>org.graalvm.buildtools</groupId>
+          <artifactId>native-maven-plugin</artifactId>
+          <version>${native.maven.plugin.version}</version>
+          <extensions>true</extensions>
+          <configuration>
+            <buildArgs>
+              <!-- <buildArg>-H:ReflectionConfigurationFiles=${project.build.directory}/classes/reflect-config.json</buildArg> -->
+              <!-- <buildArg>-H:IncludeResources=.*</buildArg> -->
+            </buildArgs>
+          </configuration>
+          <executions>
+            <execution>
+              <id>build-native</id>
+              <goals>
+                <goal>compile-no-fork</goal>
+              </goals>
+              <phase>package</phase>
+            </execution>
+            <execution>
+              <id>test-native</id>
+              <goals>
+                <goal>test</goal>
+              </goals>
+              <phase>test</phase>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>${spotless.version}</version>
 
-<build>
-	<pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-	<plugins>
-	<plugin>
-			<groupId>com.diffplug.spotless</groupId>
-			<artifactId>spotless-maven-plugin</artifactId>
-			<version>${spotless.version}</version>
-			<configuration>
-				<formats>
-					<!-- you can define as many formats as you want, each is independent -->
-					<format>
-						<!-- define the files to apply to -->
-						<includes>
-							<include>*.xml</include>
-							<include>*.md</include>
-							<include>.gitignore</include>
-						</includes>
-						<!-- define the steps to apply to those files -->
-						<trimTrailingWhitespace/>
-						<endWithNewline/>
-						<indent>
-							<tabs>true</tabs>
-							<spacesPerTab>4</spacesPerTab>
-						</indent>
-					</format>
-				</formats>
-				<!-- define a language-specific format -->
-				<java>
-					<!-- no need to specify files, inferred automatically, but you can if you want -->
+          <configuration>
+            <pom>
+              <includes>
+                <include>pom.xml</include>
+              </includes>
+              <sortPom></sortPom>
+            </pom>
+            <formats>
+              <!-- you can define as many formats as you want, each is independent -->
+              <format>
+                <!-- define the files to apply to -->
+                <includes>
+                  <include>*.md</include>
+                  <include>.gitignore</include>
+                </includes>
+                <!-- define the steps to apply to those files -->
+                <trimTrailingWhitespace></trimTrailingWhitespace>
+                <endWithNewline></endWithNewline>
+                <indent>
+                  <tabs>true</tabs>
+                  <spacesPerTab>4</spacesPerTab>
+                </indent>
+              </format>
+            </formats>
+            <!-- define a language-specific format -->
+            <java>
+              <!-- no need to specify files, inferred automatically, but you can if you want -->
 
-					<!-- apply a specific flavor of google-java-format and reflow long strings -->
-					<googleJavaFormat>
-						<version>${google-java-format.version}</version>
-						<style>GOOGLE</style>
-						<reflowLongStrings>true</reflowLongStrings>
-						<formatJavadoc>false</formatJavadoc>
-						<groupArtifact>com.google.googlejavaformat:google-java-format</groupArtifact>
-					</googleJavaFormat>
+              <!-- apply a specific flavor of google-java-format and reflow long strings -->
+              <googleJavaFormat>
+                <version>${google-java-format.version}</version>
+                <style>GOOGLE</style>
+                <reflowLongStrings>true</reflowLongStrings>
+                <formatJavadoc>false</formatJavadoc>
+                <groupArtifact>com.google.googlejavaformat:google-java-format</groupArtifact>
+              </googleJavaFormat>
 
-					<licenseHeader>
-						<file>${project.basedir}/license-header</file>
-					</licenseHeader>
-				</java>
-			</configuration>
-		</plugin>
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-assembly-plugin</artifactId>
-			<version>3.6.0</version>
-			<executions>
-				<execution>
-					<phase>package</phase>
-					<goals>
-						<goal>single</goal>
-					</goals>
-					<configuration>
-						<archive>
-							<manifest>
-								<mainClass>${mainClass}</mainClass>
-								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-							</manifest>
-						</archive>
-						<descriptorRefs>
-							<descriptorRef>jar-with-dependencies</descriptorRef>
-						</descriptorRefs>
-					</configuration>
-				</execution>
-			</executions>
-		</plugin>
-		<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-surefire-plugin</artifactId>
-			<version>3.3.0</version>
-		</plugin>
-			<plugin>
-			<groupId>org.apache.maven.plugins</groupId>
-			<artifactId>maven-compiler-plugin</artifactId>
-			<version>3.11.0</version>
-			<configuration>
-				<source>11</source>
-				<target>11</target>
-				<annotationProcessorPaths>
-					<path>
-						<groupId>info.picocli</groupId>
-						<artifactId>picocli-codegen</artifactId>
-						<version>4.7.6</version>
-					</path>
-				</annotationProcessorPaths>
-				<compilerArgs>
-					<arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
-				</compilerArgs>
-			</configuration>
-		</plugin>
-	</plugins>
-	</pluginManagement>
-</build>
+              <licenseHeader>
+                <file>${project.basedir}/license-header</file>
+              </licenseHeader>
+            </java>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.6.0</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>single</goal>
+              </goals>
+              <phase>package</phase>
+              <configuration>
+                <archive>
+                  <manifest>
+                    <mainClass>${mainClass}</mainClass>
+                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                    <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                  </manifest>
+                </archive>
+                <descriptorRefs>
+                  <descriptorRef>jar-with-dependencies</descriptorRef>
+                </descriptorRefs>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.11.0</version>
+          <configuration>
+            <source>11</source>
+            <target>11</target>
+            <annotationProcessorPaths>
+              <path>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli-codegen</artifactId>
+                <version>4.7.6</version>
+              </path>
+            </annotationProcessorPaths>
+            <compilerArgs>
+              <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>
