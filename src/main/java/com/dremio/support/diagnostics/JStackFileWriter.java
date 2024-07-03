@@ -13,4 +13,8 @@
  */
 package com.dremio.support.diagnostics;
 
-public class AppTest {}
+import java.io.IOException;
+
+public interface JStackFileWriter {
+  void writeToDisk(final JStack jstack) throws IOException;
+}

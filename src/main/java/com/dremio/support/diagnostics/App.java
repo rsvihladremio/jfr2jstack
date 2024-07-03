@@ -13,17 +13,8 @@
  */
 package com.dremio.support.diagnostics;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import jdk.jfr.consumer.RecordingFile;
 import picocli.CommandLine;
 import picocli.CommandLine.Parameters;
 
@@ -35,38 +26,19 @@ public class App implements Callable<Integer> {
   @Parameters(index = "1", description = "output folder", defaultValue = "jstacks")
   private File outputFolder;
 
-  private final String threadDumpEventName = "jdk.ThreadDump";
-
   @Override
   public Integer call() throws Exception {
-    final Map<Instant, String> jstacks = new HashMap<>();
-    try (var recordingFile = new RecordingFile(file.toPath())) {
-      while (recordingFile.hasMoreEvents()) {
-        var e = recordingFile.readEvent();
-        String eventName = e.getEventType().getName();
-        if (eventName.equals(threadDumpEventName)) {
-          Instant startTime = e.getStartTime();
-          String result = e.getString("result");
-          jstacks.put(startTime, result);
-        }
-      }
-    }
-    for (Map.Entry<Instant, String> jstack : jstacks.entrySet()) {
-      try (final BufferedWriter writer =
-          Files.newBufferedWriter(
-              Paths.get(
-                  outputFolder.toPath().toAbsolutePath().toString(),
-                  "jstack-"
-                      + jstack.getKey().atZone(ZoneId.of("UTC")).format(dateTimeFormatter)
-                      + ".txt"))) {
-        writer.append(jstack.getValue());
-        writer.flush();
-      }
+    var fileWriter = new JStackFileWriterImpl(outputFolder);
+    var reporter = new EventReporter(fileWriter);
+    var reader = new JFRReader();
+    try {
+      reader.analyzeFile(file, reporter::analyzeEvent);
+    } catch (Exception e) {
+      System.out.println(e);
+      return 1;
     }
     return 0;
   }
-
-  private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddhhmmss");
 
   public static void main(String... args) {
     int exitCode = new CommandLine(new App()).execute(args);
